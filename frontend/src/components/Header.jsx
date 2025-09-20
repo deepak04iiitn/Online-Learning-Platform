@@ -103,7 +103,7 @@ export default function Header() {
                 {/* Sign Out Button */}
                 <button
                   onClick={handleSignOut}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="bg-red-600 hover:bg-red-700 text-white cursor-pointer px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Sign Out
                 </button>
@@ -131,7 +131,7 @@ export default function Header() {
             {currentUser ? (
               <button 
                 onClick={toggleMobileMenu}
-                className="text-gray-700 hover:text-blue-600 focus:outline-none p-2"
+                className="text-gray-700 hover:text-blue-600 cursor-pointer focus:outline-none p-2"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
@@ -164,7 +164,7 @@ export default function Header() {
         {currentUser && isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
-                
+
               {/* User Info */}
               <div className="px-3 py-2 text-sm">
                 <span className="text-gray-700">Welcome, </span>
@@ -216,7 +216,7 @@ export default function Header() {
               {/* Sign Out Button */}
               <button
                 onClick={handleSignOut}
-                className="w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                className="cursor-pointer w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
               >
                 Sign Out
               </button>
