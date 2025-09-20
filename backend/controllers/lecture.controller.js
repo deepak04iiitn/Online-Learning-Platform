@@ -146,10 +146,7 @@ export const getLecturesByCourse = async (req, res, next) => {
             .populate('questions')
             .sort({ order: 1 });
 
-        res.status(200).json({
-            success: true,
-            lectures
-        });
+        res.status(200).json(lectures);
 
     } catch (error) {
         next(error);

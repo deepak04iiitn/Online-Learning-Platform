@@ -1,6 +1,7 @@
 import Course from '../models/course.model.js';
 import User from '../models/user.model.js';
 import Progress from '../models/progress.model.js';
+import Lecture from '../models/lecture.model.js';
 import { errorHandler } from '../utils/error.js';
 
 
@@ -87,34 +88,7 @@ export const getEnrolledCourses = async (req, res, next) => {
             return next(errorHandler(404, 'Student not found'));
         }
 
-        // Getting the student's progress for each enrolled course
-        const coursesWithProgress = await Promise.all(
-            student.enrolledCourses.map(async (course) => {
-                const progress = await Progress.findOne({
-                    student: studentId,
-                    course: course._id
-                });
-
-                const totalLectures = course.lectures.length;
-                const completedLectures = progress ? progress.completedLectures.filter(cl => cl.isCompleted).length : 0;
-                const progressPercentage = totalLectures > 0 ? Math.round((completedLectures / totalLectures) * 100) : 0;
-
-                return {
-                    ...course.toObject(),
-                    progress: {
-                        totalLectures,
-                        completedLectures,
-                        progressPercentage
-                    }
-                };
-            })
-        );
-
-        res.status(200).json({
-            success: true,
-            totalEnrolledCourses: coursesWithProgress.length,
-            enrolledCourses: coursesWithProgress
-        });
+        res.status(200).json(student.enrolledCourses || []);
 
     } catch (error) {
         next(error);
@@ -220,6 +194,100 @@ export const checkEnrollmentStatus = async (req, res, next) => {
             }
         });
 
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// Getting the progress for a specific course
+export const getProgressForCourse = async (req, res, next) => {
+    try {
+        const { courseId } = req.params;
+        const studentId = req.user.id;
+
+        const progress = await Progress.findOne({
+            student: studentId,
+            course: courseId
+        }).populate({
+            path: 'completedLectures.lecture',
+            select: 'title type order _id'
+        });
+
+        if (!progress) {
+            return res.status(200).json({
+                student: studentId,
+                course: courseId,
+                completedLectures: []
+            });
+        }
+
+        console.log('Progress found for course:', courseId, progress);
+        res.status(200).json(progress);
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// Marking the lecture as completed
+export const markLectureCompleted = async (req, res, next) => {
+    try {
+        const { lectureId } = req.params;
+        const { courseId, score } = req.body;
+        const studentId = req.user.id;
+
+        // Verify that the lecture exists and belongs to the course
+        const lecture = await Lecture.findById(lectureId);
+        if (!lecture) {
+            return next(errorHandler(404, 'Lecture not found'));
+        }
+
+        if (lecture.course.toString() !== courseId) {
+            return next(errorHandler(400, 'Lecture does not belong to the specified course'));
+        }
+
+        let progress = await Progress.findOne({
+            student: studentId,
+            course: courseId
+        });
+
+        if (!progress) {
+            progress = new Progress({
+                student: studentId,
+                course: courseId,
+                completedLectures: []
+            });
+        }
+
+        // Checking if the lecture is already completed
+        const existingLectureIndex = progress.completedLectures.findIndex(
+            cl => cl.lecture.toString() === lectureId
+        );
+
+        if (existingLectureIndex !== -1) {
+            // Update existing completion record
+            progress.completedLectures[existingLectureIndex].isCompleted = true;
+            if (score !== null && score !== undefined) {
+                progress.completedLectures[existingLectureIndex].score = score;
+            }
+        } else {
+            // Add new completion record
+            progress.completedLectures.push({
+                lecture: lectureId,
+                isCompleted: true,
+                score: score
+            });
+        }
+
+        await progress.save();
+        
+        console.log('Lecture marked as completed:', lectureId, 'for course:', courseId);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Lecture marked as completed'
+        });
     } catch (error) {
         next(error);
     }
