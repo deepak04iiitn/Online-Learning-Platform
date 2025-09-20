@@ -8,15 +8,13 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
   const [searchError, setSearchError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Filtering the courses based on enrollment status
-  const getAvailableCourses = (courses) => {
-    return courses.filter(course => 
-      !enrolledCourses.some(enrolled => enrolled._id === course._id)
-    );
+  // function to check if user is enrolled in a course or not
+  const isEnrolledInCourse = (courseId) => {
+    return enrolledCourses.some(enrolled => enrolled._id === courseId);
   };
 
-  const availableCourses = getAvailableCourses(allCourses);
-  const availableSearchResults = hasSearched ? getAvailableCourses(searchResults) : [];
+  const availableCourses = allCourses;
+  const availableSearchResults = hasSearched ? searchResults : [];
 
   // Search functionality
   const handleSearch = async (e) => {
@@ -44,7 +42,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
         setSearchResults(data.courses || []);
         setHasSearched(true);
         setSearchError(null);
-        resetDisplayCount(); // Reset display count when new search is performed
+        resetDisplayCount(); 
       } else {
         setSearchError(data.message || 'Search failed');
         setSearchResults([]);
@@ -78,7 +76,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 
-        <h2 className="text-2xl font-bold text-gray-800">Browse Available Courses</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Browse All Courses</h2>
         
         {/* Search Form */}
         <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
@@ -124,17 +122,10 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
           <div>
             <p className="text-blue-800">
               {availableSearchResults.length === 0 
-                ? `No available courses found for "${searchQuery}"`
-                : `Found ${availableSearchResults.length} available course${availableSearchResults.length === 1 ? '' : 's'} for "${searchQuery}"`
+                ? `No courses found for "${searchQuery}"`
+                : `Found ${availableSearchResults.length} course${availableSearchResults.length === 1 ? '' : 's'} for "${searchQuery}"`
               }
             </p>
-
-            {searchResults.length > availableSearchResults.length && (
-              <p className="text-blue-600 text-sm mt-1">
-                ({searchResults.length - availableSearchResults.length} result{searchResults.length - availableSearchResults.length === 1 ? '' : 's'} hidden - already enrolled)
-              </p>
-            )}
-
           </div>
 
           <button
@@ -160,8 +151,8 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
 
           <p className="text-gray-600">
             {showingSearchResults 
-              ? `No available courses match your search for "${searchQuery}".`
-              : 'No available courses to enroll in.'
+              ? `No courses match your search for "${searchQuery}".`
+              : 'No courses available.'
             }
           </p>
 
@@ -170,7 +161,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
               onClick={clearSearch}
               className="mt-4 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
             >
-              View all available courses
+              View all courses
             </button>
           )}
 
@@ -205,11 +196,18 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
                 </div>
                 
                 <button
-                  onClick={() => handleEnrollInCourse(course._id)}
-                  disabled={loading}
-                  className="w-full cursor-pointer bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
+                  onClick={() => !isEnrolledInCourse(course._id) && handleEnrollInCourse(course._id)}
+                  disabled={loading || isEnrolledInCourse(course._id)}
+                  className={`w-full py-2 px-4 rounded-lg transition duration-200 ${
+                    isEnrolledInCourse(course._id)
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                  } ${loading ? 'opacity-50' : ''}`}
                 >
-                  {loading ? 'Enrolling...' : 'Enroll Now'}
+                  {isEnrolledInCourse(course._id) 
+                    ? 'Already Enrolled' 
+                    : loading ? 'Enrolling...' : 'Enroll Now'
+                  }
                 </button>
               </div>
             ))}
