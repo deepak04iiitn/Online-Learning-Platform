@@ -26,7 +26,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
             ) : (
               <div className="space-y-3">
                 {courseLectures.map((lecture, index) => {
-                    
+
                   const isAccessible = isLectureAccessible(lecture, course._id, index);
                   const status = getLectureStatus(lecture, course._id);
                   const courseProgress = progress[course._id];
@@ -85,7 +85,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                         <button
                           onClick={() => setCurrentLecture({ ...lecture, courseId: course._id })}
                           disabled={!isAccessible}
-                          className={`px-4 py-2 rounded text-sm transition duration-200 ${
+                          className={`px-4 cursor-pointer py-2 rounded text-sm transition duration-200 ${
                             isAccessible
                               ? 'bg-blue-600 text-white hover:bg-blue-700'
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'

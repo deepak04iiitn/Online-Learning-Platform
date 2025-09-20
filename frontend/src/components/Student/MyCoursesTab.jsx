@@ -10,7 +10,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
         <p className="text-gray-600 mb-4">You haven't enrolled in any courses yet.</p>
         <button
           onClick={() => setActiveTab('browse')}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+          className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
         >
           Browse Courses
         </button>
@@ -29,12 +29,13 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
             : 0;
 
           return (
-            <div key={course._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            
+            <div key={course._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col">
 
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
               <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
               
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-4 flex-grow">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Progress:</span>
                   <span className="font-medium">{completedCount}/{courseLectures.length} lectures</span>
@@ -55,13 +56,13 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
               <div className="flex space-x-2">
                 <button
                   onClick={() => setActiveTab('lectures')}
-                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition duration-200"
+                  className="flex-1 cursor-pointer bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition duration-200"
                 >
                   View Lectures
                 </button>
                 <button
                   onClick={() => handleUnenrollFromCourse(course._id)}
-                  className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition duration-200"
+                  className="bg-red-600 text-white cursor-pointer px-3 py-2 rounded text-sm hover:bg-red-700 transition duration-200"
                 >
                   Unenroll
                 </button>
@@ -72,7 +73,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
 
       </div>
     )}
-    
+
   </div>
 );
 

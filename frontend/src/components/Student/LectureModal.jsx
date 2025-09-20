@@ -13,7 +13,7 @@ const LectureModal = ({ currentLecture, setCurrentLecture, quizAnswers, setQuizA
           <h2 className="text-2xl font-bold">{currentLecture.title}</h2>
           <button
             onClick={() => setCurrentLecture(null)}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 cursor-pointer"
           >
             ✕
           </button>
@@ -30,7 +30,7 @@ const LectureModal = ({ currentLecture, setCurrentLecture, quizAnswers, setQuizA
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => markLectureCompleted(currentLecture._id, currentLecture.courseId)}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200"
+                className="bg-green-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200"
               >
                 Mark as Completed
               </button>
@@ -62,7 +62,7 @@ const LectureModal = ({ currentLecture, setCurrentLecture, quizAnswers, setQuizA
                       <span>{option.text}</span>
                     </label>
                   ))}
-                  
+
                 </div>
               </div>
             ))}
@@ -71,7 +71,7 @@ const LectureModal = ({ currentLecture, setCurrentLecture, quizAnswers, setQuizA
               <button
                 onClick={() => handleQuizSubmit(currentLecture, currentLecture.courseId)}
                 disabled={Object.keys(quizAnswers).length !== (currentLecture.questions || []).length}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit Quiz
               </button>

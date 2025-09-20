@@ -93,7 +93,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
               <button
                 type="button"
                 onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 disabled={isSearching}
               >
                 ✕
@@ -105,7 +105,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
           <button
             type="submit"
             disabled={isSearching || !searchQuery.trim()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="cursor-pointer px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {isSearching ? 'Searching...' : 'Search'}
           </button>
@@ -135,7 +135,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
 
           <button
             onClick={clearSearch}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
           >
             Show All Courses
           </button>
@@ -164,7 +164,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
           {showingSearchResults && (
             <button
               onClick={clearSearch}
-              className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
+              className="mt-4 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
             >
               View all available courses
             </button>
@@ -174,12 +174,13 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {coursesToDisplay.map(course => (
-            <div key={course._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+
+            <div key={course._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col">
 
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
               <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
               
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2 mb-4 flex-grow">
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Instructor:</span>
@@ -201,7 +202,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
               <button
                 onClick={() => handleEnrollInCourse(course._id)}
                 disabled={loading}
-                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
+                className="w-full cursor-pointer bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
               >
                 {loading ? 'Enrolling...' : 'Enroll Now'}
               </button>
@@ -210,7 +211,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
 
         </div>
       )}
-      
+
     </div>
   );
 };
