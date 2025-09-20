@@ -237,6 +237,4 @@ online-learning-platform/
 4. Push to branch (`git push origin feature/new-feature`)
 5. Create a Pull Request
 
-## License
 
-This project is licensed under the ISC License.
