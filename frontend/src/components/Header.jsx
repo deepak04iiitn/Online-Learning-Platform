@@ -1,15 +1,32 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { signoutSuccess } from '../redux/user/userSlice';
 
 export default function Header() {
-
+    
   const location = useLocation();
+  const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   
+  const handleSignOut = async () => {
+    try {
+      await fetch('/backend/auth/signout', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.log('Error signing out:', error);
+    } finally {
+      dispatch(signoutSuccess());
+    }
+  };
+
   return (
+
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
+
           <div className="flex-shrink-0">
             <Link to="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700">
               EduPlatform
@@ -17,48 +34,100 @@ export default function Header() {
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <Link 
-              to="/" 
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                location.pathname === '/' 
-                  ? 'text-blue-600 border-b-2 border-blue-600' 
-                  : 'text-gray-700 hover:text-blue-600'
-              }`}
-            >
-              Home
-            </Link>
-          </nav>
+          {currentUser && (
+            <nav className="hidden md:flex space-x-8">
+              <Link 
+                to="/" 
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-700 hover:text-blue-600'
+                }`}
+              >
+                Home
+              </Link>
 
-          {/* Auth Buttons */}
+              <Link 
+                to="/dashboard" 
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/dashboard' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-700 hover:text-blue-600'
+                }`}
+              >
+                Dashboard
+              </Link>
+
+              {currentUser.role === 'Instructor' && (
+                <Link 
+                  to="/courses" 
+                  className={`px-3 py-2 text-sm font-medium transition-colors ${
+                    location.pathname === '/courses' 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-700 hover:text-blue-600'
+                  }`}
+                >
+                  My Courses
+                </Link>
+              )}
+
+            </nav>
+          )}
+
+
+          {/* Auth Section */}
           <div className="flex items-center space-x-4">
-            <Link
-              to="/sign-in"
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/sign-up"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Sign Up
-            </Link>
+
+            {currentUser ? (
+              <div className="flex items-center space-x-4">
+
+                {/* User Info */}
+                <div className="hidden sm:flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">Welcome, </span>
+                  <span className="text-sm font-medium text-gray-900">{currentUser.name}</span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {currentUser.role}
+                  </span>
+                </div>
+                
+                {/* Sign Out Button */}
+                <button
+                  onClick={handleSignOut}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link
+                  to="/sign-in"
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/sign-up"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button className="text-gray-700 hover:text-blue-600 focus:outline-none">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-
+          {/* Mobile menu button - Only show if user is authenticated */}
+          {currentUser && (
+            <div className="md:hidden">
+              <button className="text-gray-700 hover:text-blue-600 focus:outline-none">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
-
       </div>
-      
     </header>
   );
 }
