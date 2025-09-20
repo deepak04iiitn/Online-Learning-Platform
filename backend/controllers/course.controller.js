@@ -15,6 +15,16 @@ export const createCourse = async (req, res, next) => {
             return next(errorHandler(400, 'Title and description are required'));
         }
 
+        if(title.trim().length < 3) 
+        {
+            return next(errorHandler(400, 'Title must be at least 3 characters long'));
+        }
+
+        if(description.trim().length < 10) 
+        {
+            return next(errorHandler(400, 'Description must be at least 10 characters long'));
+        }
+
         // creating the new course
         const newCourse = new Course({
             title: title.trim(),
@@ -117,6 +127,16 @@ export const updateCourse = async (req, res, next) => {
         if(course.instructor.toString() !== instructorId) 
         {
             return next(errorHandler(403, 'You can only update your own courses'));
+        }
+
+        if(title && title.trim().length < 3) 
+        {
+            return next(errorHandler(400, 'Title must be at least 3 characters long'));
+        }
+
+        if(description && description.trim().length < 10) 
+        {
+            return next(errorHandler(400, 'Description must be at least 10 characters long'));
         }
 
         // Updating the course
