@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
+import courseRoutes from './routes/course.route.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use((err, req, res, next) => {
 
 
 app.use('/backend/auth', authRoutes);
+app.use('/backend/courses', courseRoutes);
 
 
 app.get('/backend/ping', (req, res) => {
