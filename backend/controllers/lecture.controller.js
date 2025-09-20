@@ -2,6 +2,7 @@ import Lecture from '../models/lecture.model.js';
 import Course from '../models/course.model.js';
 import Question from '../models/question.model.js';
 import { errorHandler } from '../utils/error.js';
+import User from '../models/user.model.js';
 
 
 // Creating a new lecture (only instructors can create for their own courses)
@@ -134,12 +135,25 @@ export const createLecture = async (req, res, next) => {
 export const getLecturesByCourse = async (req, res, next) => {
     try {
         const { courseId } = req.params;
+        const studentId = req.user.id;
 
-        // Verifying if the course exists
+        // Verify if the course exists
         const course = await Course.findById(courseId);
         if(!course) 
         {
             return next(errorHandler(404, 'Course not found'));
+        }
+
+        // Verify student is enrolled (for student access)
+        if (req.user.role === 'Student') {
+            const student = await User.findById(studentId);
+            const isEnrolled = student.enrolledCourses.some(
+                course => course.toString() === courseId.toString()
+            );
+
+            if (!isEnrolled) {
+                return next(errorHandler(403, 'Not enrolled in this course'));
+            }
         }
 
         const lectures = await Lecture.find({ course: courseId })
@@ -148,10 +162,13 @@ export const getLecturesByCourse = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
+            courseId: courseId,
+            totalLectures: lectures.length,
             lectures: lectures || []
         });
 
     } catch (error) {
+        console.error('Error fetching lectures:', error);
         next(error);
     }
 };

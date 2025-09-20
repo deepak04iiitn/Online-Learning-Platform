@@ -1,3 +1,5 @@
+// Fixed StudentDashboard.jsx - Key fixes for data fetching and display
+
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import OverviewTab from './OverviewTab';
@@ -25,37 +27,47 @@ export default function StudentDashboard() {
     browseCourses: 6
   });
 
-
   useEffect(() => {
     fetchEnrolledCourses();
     fetchAllCourses();
   }, []);
 
-
+  
   const fetchEnrolledCourses = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/backend/students/enrolled-courses', {
         credentials: 'include'
       });
 
+      if(!response.ok) 
+      {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       
-      if(response.ok) 
+      setEnrolledCourses(Array.isArray(data) ? data : []);
+      
+      // Fetching progress and lectures for all enrolled courses
+      if(Array.isArray(data) && data.length > 0) 
       {
-        setEnrolledCourses(data);
-        // Fetch progress and lectures for all enrolled courses
-        for (const course of data) {
+        for(const course of data) 
+        {
+          console.log('Fetching data for course:', course._id, course.title);
           await fetchProgressForCourse(course._id);
           await fetchLecturesForCourse(course._id);
         }
-      } else {
-        setError(data.message);
       }
+      setError(null);
     } catch (err) {
-      setError('Failed to fetch enrolled courses');
+      console.error('Error fetching enrolled courses:', err);
+      setError('Failed to fetch enrolled courses: ' + err.message);
+      setEnrolledCourses([]);
+    } finally {
+      setLoading(false);
     }
   };
-
 
   const fetchAllCourses = async () => {
     try {
@@ -63,62 +75,82 @@ export default function StudentDashboard() {
         credentials: 'include'
       });
 
-      const data = await response.json();
-      
-      if(response.ok) 
+      if(!response.ok) 
       {
-        setAllCourses(data);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('All courses data:', data);
+      setAllCourses(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Failed to fetch all courses');
+      console.error('Failed to fetch all courses:', err);
+      setError('Failed to fetch all courses: ' + err.message);
     }
   };
 
-
+  // progress fetching with proper error handling
   const fetchProgressForCourse = async (courseId) => {
     try {
+      console.log('Fetching progress for course:', courseId);
       const response = await fetch(`/backend/students/progress/${courseId}`, {
         credentials: 'include'
       });
 
-      const data = await response.json();
-      
-      if(response.ok) 
+      if(!response.ok) 
       {
-        console.log('Progress data for course', courseId, ':', data);
-        setProgress(prev => ({
-          ...prev,
-          [courseId]: data
-        }));
-        return data;
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+  
+      const progressData = data.progress || data;
+      
+      setProgress(prev => ({
+        ...prev,
+        [courseId]: progressData
+      }));
+      
+      return progressData;
+
     } catch (err) {
-      console.error('Failed to fetch progress for course:', courseId);
+      setProgress(prev => ({
+        ...prev,
+        [courseId]: { completedLectures: [] }
+      }));
     }
     return null;
   };
 
-
+  // lecture fetching with proper data extraction
   const fetchLecturesForCourse = async (courseId) => {
     try {
+      console.log('Fetching lectures for course:', courseId);
       const response = await fetch(`/backend/lectures/course/${courseId}/lectures`, {
         credentials: 'include'
       });
       
+      if(!response.ok) 
+      {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
-      if(response.ok) 
-      {
-        setLectures(prev => ({
-          ...prev,
-          [courseId]: data
-        }));
-      }
+      const lecturesData = data.lectures || [];
+      
+      setLectures(prev => ({
+        ...prev,
+        [courseId]: lecturesData
+      }));
+
     } catch (err) {
-      console.error('Failed to fetch lectures for course:', courseId);
+      setLectures(prev => ({
+        ...prev,
+        [courseId]: []
+      }));
     }
   };
-
 
   const handleEnrollInCourse = async (courseId) => {
     setLoading(true);
@@ -129,25 +161,23 @@ export default function StudentDashboard() {
         credentials: 'include'
       });
 
-      const data = await response.json();
-      
-      if(response.ok) 
+      if(!response.ok) 
       {
-        await fetchEnrolledCourses();
-        setError(null);
-      } else {
-        setError(data.message);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+  
+      await fetchEnrolledCourses();
+      setError(null);
     } catch (err) {
-      setError('Failed to enroll in course');
+      setError('Failed to enroll in course: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-
   const handleUnenrollFromCourse = async (courseId) => {
-
     if(!window.confirm('Are you sure you want to unenroll from this course?')) return;
     
     setLoading(true);
@@ -158,29 +188,31 @@ export default function StudentDashboard() {
         credentials: 'include'
       });
       
-      if(response.ok) 
+      if(!response.ok) 
       {
-        setEnrolledCourses(enrolledCourses.filter(course => course._id !== courseId));
-        const updatedProgress = { ...progress };
-        delete updatedProgress[courseId];
-        setProgress(updatedProgress);
-        const updatedLectures = { ...lectures };
-        delete updatedLectures[courseId];
-        setLectures(updatedLectures);
-        setError(null);
-      } else {
-        const data = await response.json();
-        setError(data.message);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      setEnrolledCourses(enrolledCourses.filter(course => course._id !== courseId));
+      
+      const updatedProgress = { ...progress };
+      delete updatedProgress[courseId];
+      setProgress(updatedProgress);
+      
+      const updatedLectures = { ...lectures };
+      delete updatedLectures[courseId];
+      setLectures(updatedLectures);
+      
+      setError(null);
     } catch (err) {
-      setError('Failed to unenroll from course');
+      console.error('Unenrollment error:', err);
+      setError('Failed to unenroll from course: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-
-  // Enhanced function to mark lecture as started
+  // function to mark lecture as started
   const markLectureStarted = async (lectureId, courseId) => {
     try {
       const response = await fetch(`/backend/students/mark-started/${lectureId}`, {
@@ -194,7 +226,7 @@ export default function StudentDashboard() {
       
       if(response.ok) 
       {
-        // Refresh progress to update UI immediately
+        // Refreshing the progress to update UI immediately
         await fetchProgressForCourse(courseId);
       } else {
         console.error('Failed to mark lecture as started');
@@ -203,7 +235,6 @@ export default function StudentDashboard() {
       console.error('Failed to mark lecture as started:', err);
     }
   };
-
 
   const markLectureCompleted = async (lectureId, courseId, score = null) => {
     try {
@@ -216,25 +247,32 @@ export default function StudentDashboard() {
         body: JSON.stringify({ courseId, score })
       });
       
-      if(response.ok) 
+      if(!response.ok) 
       {
-        // Refresh progress to update UI immediately
-        await fetchProgressForCourse(courseId);
-        setCurrentLecture(null);
-        setQuizAnswers({});
-        setError(null);
-        console.log('Lecture completed successfully with score:', score);
-      } else {
-        const data = await response.json();
-        setError(data.message);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
+      
+      // Refreshing the progress to update UI immediately
+      await fetchProgressForCourse(courseId);
+      setCurrentLecture(null);
+      setQuizAnswers({});
+      setError(null);
+      
+      // Showing pass/fail message for quizzes
+      if(data.isPassed !== undefined && !data.isPassed) {
+        setError('Quiz failed! You need to answer all questions correctly to pass and unlock the next lecture. You can retry this quiz.');
+      } else if (data.isPassed !== undefined && data.isPassed) {
+        console.log('Quiz passed successfully!');
+      }
+      
     } catch (err) {
-      setError('Failed to mark lecture as completed');
+      setError('Failed to mark lecture as completed: ' + err.message);
     }
   };
 
-
-  // quiz submission with proper scoring
+  // Quiz submission with proper scoring
   const handleQuizSubmit = async (lecture, courseId) => {
     try {
       let score = 0;
@@ -264,12 +302,12 @@ export default function StudentDashboard() {
       
     } catch (err) {
       console.error('Error submitting quiz:', err);
-      setError('Failed to submit quiz');
+      setError('Failed to submit quiz: ' + err.message);
     }
   };
 
 
-  // function to mark as started
+  // Function to mark as started
   const handleSetCurrentLecture = async (lectureData) => {
     if(lectureData) 
     {
@@ -295,28 +333,37 @@ export default function StudentDashboard() {
     setCurrentLecture(lectureData);
   };
 
-
+  // lecture accessibility check
   const isLectureAccessible = (lecture, courseId, lectureIndex) => {
     const courseProgress = progress[courseId];
     const courseLectures = lectures[courseId] || [];
     
-    if(!courseProgress) return lectureIndex === 0;
+    // First lecture is always accessible
     if(lectureIndex === 0) return true;
-    if(lectureIndex > 0 && courseLectures[lectureIndex - 1]) 
-    {
+    
+    // If no progress data, only first lecture is accessible
+    if(!courseProgress) return lectureIndex === 0;
+    
+    // Check if previous lecture is completed
+    if(lectureIndex > 0 && courseLectures[lectureIndex - 1]) {
       const previousLecture = courseLectures[lectureIndex - 1];
       const completedLecture = courseProgress.completedLectures?.find(cl => {
-        if (!cl || !cl.lecture) return false;
+        if(!cl || !cl.lecture) return false;
         const lectureId = typeof cl.lecture === 'object' && cl.lecture._id ? cl.lecture._id : cl.lecture;
         return lectureId.toString() === previousLecture._id.toString();
       });
 
-      return completedLecture?.isCompleted === true;
+      // For quiz lectures, must be both completed AND passed
+      // For reading lectures, just needs to be completed
+      if(previousLecture.type === 'Quiz') {
+        return completedLecture?.isCompleted === true && completedLecture?.isPassed === true;
+      } else {
+        return completedLecture?.isCompleted === true;
+      }
     }
 
     return false;
   };
-
 
   const getLectureStatus = (lecture, courseId) => {
     const courseProgress = progress[courseId];
@@ -325,7 +372,7 @@ export default function StudentDashboard() {
 
     const completedLecture = courseProgress.completedLectures?.find(
       cl => {
-        if (!cl || !cl.lecture) return false;
+        if(!cl || !cl.lecture) return false;
         const lectureId = typeof cl.lecture === 'object' && cl.lecture._id 
           ? cl.lecture._id.toString() 
           : cl.lecture.toString();
@@ -333,15 +380,16 @@ export default function StudentDashboard() {
       }
     );
 
-    if (completedLecture?.isCompleted) {
+    if(completedLecture?.isCompleted && completedLecture?.isPassed !== false) {
       return 'completed';
+    } else if (completedLecture && lecture.type === 'Quiz' && completedLecture.isPassed === false) {
+      return 'failed';
     } else if (completedLecture && !completedLecture.isCompleted) {
       return 'started';
     } else {
       return 'not-started';
     }
   };
-
 
   const loadMoreItems = (section) => {
     setDisplayCounts(prev => ({
@@ -350,7 +398,6 @@ export default function StudentDashboard() {
     }));
   };
 
-  
   const resetDisplayCount = (section) => {
     setDisplayCounts(prev => ({
       ...prev,
@@ -358,6 +405,13 @@ export default function StudentDashboard() {
     }));
   };
 
+  // Debug information
+  console.log('Current dashboard state:', {
+    enrolledCourses: enrolledCourses.length,
+    progress: Object.keys(progress).length,
+    lectures: Object.keys(lectures).length,
+    loading
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -369,6 +423,16 @@ export default function StudentDashboard() {
           </h1>
           <p className="text-gray-600">Continue your learning journey</p>
         </div>
+
+        {/* Debug Info - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-4 bg-gray-100 rounded text-sm">
+            <strong>Debug Info:</strong> 
+            Enrolled: {enrolledCourses.length}, 
+            Progress: {Object.keys(progress).length}, 
+            Lectures: {Object.keys(lectures).length}
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -415,7 +479,6 @@ export default function StudentDashboard() {
             {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} setActiveTab={setActiveTab} displayCount={displayCounts.myCourses} loadMore={() => loadMoreItems('myCourses')} />}
             {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={handleSetCurrentLecture} displayCount={displayCounts.lectures} loadMore={() => loadMoreItems('lectures')} />}
             {activeTab === 'browse' && <BrowseCoursesTab allCourses={allCourses} enrolledCourses={enrolledCourses} handleEnrollInCourse={handleEnrollInCourse} loading={loading} displayCount={displayCounts.browseCourses} loadMore={() => loadMoreItems('browseCourses')} resetDisplayCount={() => resetDisplayCount('browseCourses')} />}
-            
           </>
         )}
 

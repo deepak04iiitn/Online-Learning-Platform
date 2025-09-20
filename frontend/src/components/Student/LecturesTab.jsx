@@ -13,16 +13,12 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
   // Function to toggle course collapse state
   const toggleCourseCollapse = (courseId) => {
     setCollapsedCourses(prev => {
-
       const newSet = new Set(prev);
-
-      if(newSet.has(courseId)) 
-      {
+      if(newSet.has(courseId)) {
         newSet.delete(courseId);
       } else {
         newSet.add(courseId);
       }
-
       return newSet;
     });
   };
@@ -38,7 +34,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
     setHasSearched(false);
   };
 
-  // Filter courses based on search
+  // Filtering courses based on search
   const getFilteredCourses = () => {
     if(!hasSearched || !searchQuery.trim()) 
     {
@@ -58,7 +54,6 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
 
   return (
     <div className="space-y-6">
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Course Lectures</h2>
         
@@ -72,7 +67,6 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
               placeholder="Search your courses..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-
             {searchQuery && (
               <button
                 type="button"
@@ -105,7 +99,6 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
               }
             </p>
           </div>
-
           <button
             onClick={clearSearch}
             className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
@@ -115,7 +108,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
         </div>
       )}
       
-      {enrolledCourses.length === 0 ? (
+      {!enrolledCourses || enrolledCourses.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600">Enroll in courses to access lectures.</p>
         </div>
@@ -132,9 +125,16 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
       ) : (
         <>
           {coursesToShow.map(course => {
-
-            const courseLectures = lectures[course._id] || [];
+            // FIXED: Safe access to lectures data
+            const courseLectures = lectures?.[course._id] || [];
             const isCollapsed = collapsedCourses.has(course._id);
+            
+            // Debug logging for each course
+            console.log(`Course ${course._id} (${course.title}):`, {
+              lectures: courseLectures.length,
+              hasProgress: !!progress?.[course._id],
+              progressData: progress?.[course._id]
+            });
             
             return (
               <div key={course._id} className="bg-white p-6 rounded-lg shadow-md">
@@ -164,22 +164,24 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                   </button>
                 </div>
                 
-                {/* Course Content - Conditionally Rendered */}
+                {/* Course Content */}
                 {!isCollapsed && (
                   <>
                     {courseLectures.length === 0 ? (
-                      <p className="text-gray-600">No lectures available in this course yet.</p>
+                      <div className="text-center py-8">
+                        <p className="text-gray-600">No lectures available in this course yet.</p>
+                        <p className="text-sm text-gray-500 mt-1">Check back later for course content.</p>
+                      </div>
                     ) : (
                       <div className="space-y-3">
                         {courseLectures.map((lecture, index) => {
-
-                          const isAccessible = isLectureAccessible(lecture, course._id, index);
-                          const status = getLectureStatus(lecture, course._id);
-                          const courseProgress = progress[course._id];
+                          // FIXED: Safe access to progress and lecture data
+                          const courseProgress = progress?.[course._id];
                           
+                          // Find completed lecture with safe navigation
                           const completedLecture = courseProgress?.completedLectures?.find(
                             cl => {
-                              if (!cl || !cl.lecture) return false;
+                              if(!cl || !cl.lecture) return false;
                               const lectureId = typeof cl.lecture === 'object' && cl.lecture._id 
                                 ? cl.lecture._id.toString() 
                                 : cl.lecture.toString();
@@ -187,12 +189,20 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                             }
                           );
 
+                          const isAccessible = isLectureAccessible ? isLectureAccessible(lecture, course._id, index) : true;
+                          const status = getLectureStatus ? getLectureStatus(lecture, course._id) : 'not-started';
+
+                          // FIXED: Enhanced status display logic
                           const getStatusDisplay = () => {
-                            if(completedLecture?.isCompleted) 
-                            {
+                            if(completedLecture?.isCompleted && completedLecture?.isPassed !== false) {
                               return {
                                 text: 'Completed',
                                 className: 'bg-green-100 text-green-800'
+                              };
+                            } else if (completedLecture && lecture.type === 'Quiz' && completedLecture.isPassed === false) {
+                              return {
+                                text: 'Failed',
+                                className: 'bg-red-100 text-red-800'
                               };
                             } else if (completedLecture && !completedLecture.isCompleted) {
                               return {
@@ -210,9 +220,10 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                           const statusDisplay = getStatusDisplay();
 
                           const getButtonText = () => {
-                            if(completedLecture?.isCompleted) 
-                            {
+                            if(completedLecture?.isCompleted && completedLecture?.isPassed !== false) {
                               return 'Review';
+                            } else if (completedLecture && lecture.type === 'Quiz' && completedLecture.isPassed === false) {
+                              return 'Retry';
                             } else if (completedLecture && !completedLecture.isCompleted) {
                               return 'Continue';
                             } else {
@@ -234,11 +245,10 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                                   <h4 className={`font-medium ${
                                     isAccessible ? 'text-gray-800' : 'text-gray-500'
                                   }`}>
-                                    {lecture.title}
+                                    Lecture {index + 1}: {lecture.title}
                                   </h4>
                                   
                                   <div className="flex items-center space-x-4 mt-2 text-sm">
-                                    
                                     <span className={`px-2 py-1 rounded text-xs ${
                                       lecture.type === 'Reading' 
                                         ? 'bg-blue-100 text-blue-800' 
@@ -257,28 +267,42 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                                       </span>
                                     )}
                                     
+                                    {/* Pass/Fail Status for Quiz lectures */}
+                                    {lecture.type === 'Quiz' && completedLecture && (
+                                      <span className={`px-2 py-1 rounded text-xs ${
+                                        completedLecture.isPassed === false 
+                                          ? 'bg-red-100 text-red-800' 
+                                          : completedLecture.isCompleted 
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-yellow-100 text-yellow-800'
+                                      }`}>
+                                        {completedLecture.isPassed === false 
+                                          ? 'Failed' 
+                                          : completedLecture.isCompleted 
+                                            ? 'Passed'
+                                            : 'In Progress'
+                                        }
+                                      </span>
+                                    )}
+                                    
                                     {/* Score Display for quiz lectures with scores */}
                                     {lecture.type === 'Quiz' && completedLecture && 
-                                        completedLecture.isCompleted && (
+                                        (completedLecture.correctAnswers !== null && completedLecture.totalQuestions !== null) && (
                                         <span className="text-gray-600 font-medium">
-                                            {completedLecture.correctAnswers !== null && completedLecture.totalQuestions !== null ? (
-                                            `Score: ${completedLecture.correctAnswers}/${completedLecture.totalQuestions}`
-                                            ) : completedLecture.score !== null && completedLecture.score !== undefined ? (
-                                            `Score: ${completedLecture.score}%`
-                                            ) : (
-                                            'Score: N/A'
-                                            )}
+                                          Score: {completedLecture.correctAnswers}/{completedLecture.totalQuestions}
                                         </span>
                                     )}
                                   </div>
                                 </div>
                                 
                                 <button
-                                  onClick={() => setCurrentLecture({ ...lecture, courseId: course._id })}
+                                  onClick={() => setCurrentLecture && setCurrentLecture({ ...lecture, courseId: course._id })}
                                   disabled={!isAccessible}
                                   className={`px-4 cursor-pointer py-2 rounded text-sm transition duration-200 ${
                                     isAccessible
-                                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                      ? completedLecture && lecture.type === 'Quiz' && completedLecture.isPassed === false
+                                        ? 'bg-orange-600 text-white hover:bg-orange-700'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700'
                                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                   }`}
                                 >

@@ -26,6 +26,11 @@ const progressSchema = new mongoose.Schema(
           default: false,
         },
 
+        isPassed: {
+            type: Boolean,
+            default: true  // Default true for Reading lectures
+        },
+
         score: {
           type: Number, 
           default: null,

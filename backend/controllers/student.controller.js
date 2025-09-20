@@ -206,7 +206,23 @@ export const getProgressForCourse = async (req, res, next) => {
         const { courseId } = req.params;
         const studentId = req.user.id;
 
-        const progress = await Progress.findOne({
+        // Verify course exists and student is enrolled
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return next(errorHandler(404, 'Course not found'));
+        }
+
+        // Check if student is enrolled
+        const student = await User.findById(studentId);
+        const isEnrolled = student.enrolledCourses.some(
+            course => course.toString() === courseId.toString()
+        );
+
+        if (!isEnrolled) {
+            return next(errorHandler(403, 'Not enrolled in this course'));
+        }
+
+        let progress = await Progress.findOne({
             student: studentId,
             course: courseId
         }).populate({
@@ -214,17 +230,22 @@ export const getProgressForCourse = async (req, res, next) => {
             select: 'title type order _id'
         });
 
+        // If no progress record exists, create empty structure
         if (!progress) {
-            return res.status(200).json({
+            progress = {
                 student: studentId,
                 course: courseId,
                 completedLectures: []
-            });
+            };
         }
 
         console.log('Progress found for course:', courseId, progress);
-        res.status(200).json(progress);
+        res.status(200).json({
+            success: true,
+            progress: progress
+        });
     } catch (error) {
+        console.error('Error fetching progress:', error);
         next(error);
     }
 };
@@ -321,7 +342,7 @@ export const markLectureCompleted = async (req, res, next) => {
             studentId
         });
 
-        // Verify that the lecture exists and belongs to the course
+        // Verifying that the lecture exists and belongs to the course
         const lecture = await Lecture.findById(lectureId);
         if(!lecture) 
         {
@@ -347,15 +368,32 @@ export const markLectureCompleted = async (req, res, next) => {
             });
         }
 
-        // Find existing lecture progress
+        // Finding existing lecture progress
         const existingLectureIndex = progress.completedLectures.findIndex(
             cl => cl.lecture && cl.lecture.toString() === lectureId.toString()
         );
 
+        let isPassed = true; // Default for Reading lectures
+        let isCompleted = true; // Default for Reading lectures
+
+        // For Quiz lectures, determining pass/fail status
+        if(lecture.type === 'Quiz' && score !== null && score !== undefined) 
+        {
+            if(typeof score === 'object') 
+            {
+                // Calculate if passed (all questions correct)
+                isPassed = score.correctAnswers === score.totalQuestions;
+                // Only marking as completed if passed
+                isCompleted = isPassed;
+            }
+        }
+
         if(existingLectureIndex !== -1) 
         {
-            // Update existing completion record
-            progress.completedLectures[existingLectureIndex].isCompleted = true;
+            // Updating the existing completion record
+            progress.completedLectures[existingLectureIndex].isCompleted = isCompleted;
+            progress.completedLectures[existingLectureIndex].isPassed = isPassed;
+            
             if (score !== null && score !== undefined) 
             {
                 if(typeof score === 'object') 
@@ -372,7 +410,8 @@ export const markLectureCompleted = async (req, res, next) => {
             // Adding new completion record
             const newLectureProgress = {
                 lecture: lectureId,
-                isCompleted: true,
+                isCompleted: isCompleted,
+                isPassed: isPassed,
                 correctAnswers: score?.correctAnswers || null,
                 totalQuestions: score?.totalQuestions || null,
                 score: typeof score === 'number' ? score : null 
@@ -383,12 +422,14 @@ export const markLectureCompleted = async (req, res, next) => {
 
         await progress.save();
         
-        console.log('Lecture marked as completed successfully');
+        console.log('Lecture completion status updated:', { isCompleted, isPassed });
         
         res.status(200).json({ 
             success: true, 
-            message: 'Lecture marked as completed',
-            progress: progress
+            message: `Lecture ${isCompleted ? 'completed' : 'attempted'}`,
+            progress: progress,
+            isPassed: isPassed,
+            isCompleted: isCompleted
         });
     } catch (error) {
         console.error('Error marking lecture as completed:', error);
