@@ -1,14 +1,98 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromCourse, setActiveTab, displayCount, loadMore }) => {
   
-  const coursesToShow = enrolledCourses.slice(0, displayCount);
-  const hasMoreCourses = enrolledCourses.length > displayCount;
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Search functionality 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setHasSearched(true);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setHasSearched(false);
+  };
+
+  // Filtering courses based on search
+  const getFilteredCourses = () => {
+    if(!hasSearched || !searchQuery.trim()) 
+    {
+      return enrolledCourses;
+    }
+    
+    return enrolledCourses.filter(course =>
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const filteredCourses = getFilteredCourses();
+  const coursesToShow = filteredCourses.slice(0, displayCount);
+  const hasMoreCourses = filteredCourses.length > displayCount;
+  const showingSearchResults = hasSearched && searchQuery.trim();
 
   return (
     <div className="space-y-6">
 
-      <h2 className="text-2xl font-bold text-gray-800">My Courses</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">My Courses</h2>
+        
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-80">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search your courses..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={!searchQuery.trim()}
+            className="cursor-pointer px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            Search
+          </button>
+        </form>
+      </div>
+
+      {/* Search Results Info */}
+      {showingSearchResults && (
+        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div>
+            <p className="text-blue-800">
+              {filteredCourses.length === 0 
+                ? `No courses found for "${searchQuery}"`
+                : `Found ${filteredCourses.length} course${filteredCourses.length === 1 ? '' : 's'} for "${searchQuery}"`
+              }
+            </p>
+          </div>
+
+          <button
+            onClick={clearSearch}
+            className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
+          >
+            Show All Courses
+          </button>
+        </div>
+      )}
       
       {enrolledCourses.length === 0 ? (
         <div className="text-center py-12">
@@ -18,6 +102,16 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
             className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
           >
             Browse Courses
+          </button>
+        </div>
+      ) : filteredCourses.length === 0 && showingSearchResults ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600">No courses match your search for "{searchQuery}".</p>
+          <button
+            onClick={clearSearch}
+            className="mt-4 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
+          >
+            View all courses
           </button>
         </div>
       ) : (
@@ -85,7 +179,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
                 onClick={loadMore}
                 className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
               >
-                Load More Courses ({enrolledCourses.length - displayCount} remaining)
+                Load More Courses ({filteredCourses.length - displayCount} remaining)
               </button>
             </div>
           )}

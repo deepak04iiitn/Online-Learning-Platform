@@ -2,38 +2,132 @@ import React, { useState } from 'react';
 
 const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible, getLectureStatus, setCurrentLecture, displayCount, loadMore }) => {
   
-  // tracking which courses are collapsed (by courseId)
+  // State to track which courses are collapsed (by courseId)
   const [collapsedCourses, setCollapsedCourses] = useState(() => 
     new Set(enrolledCourses.map(course => course._id))
   );
-  
-  const coursesToShow = enrolledCourses.slice(0, displayCount);
-  const hasMoreCourses = enrolledCourses.length > displayCount;
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+  
   // Function to toggle course collapse state
   const toggleCourseCollapse = (courseId) => {
     setCollapsedCourses(prev => {
 
       const newSet = new Set(prev);
-      
+
       if(newSet.has(courseId)) 
       {
         newSet.delete(courseId);
       } else {
         newSet.add(courseId);
       }
+
       return newSet;
     });
   };
 
+  // Search functionality 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setHasSearched(true);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setHasSearched(false);
+  };
+
+  // Filter courses based on search
+  const getFilteredCourses = () => {
+    if(!hasSearched || !searchQuery.trim()) 
+    {
+      return enrolledCourses;
+    }
+    
+    return enrolledCourses.filter(course =>
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const filteredCourses = getFilteredCourses();
+  const coursesToShow = filteredCourses.slice(0, displayCount);
+  const hasMoreCourses = filteredCourses.length > displayCount;
+  const showingSearchResults = hasSearched && searchQuery.trim();
+
   return (
     <div className="space-y-6">
 
-      <h2 className="text-2xl font-bold text-gray-800">Course Lectures</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">Course Lectures</h2>
+        
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-80">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search your courses..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={!searchQuery.trim()}
+            className="cursor-pointer px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            Search
+          </button>
+        </form>
+      </div>
+
+      {/* Search Results Info */}
+      {showingSearchResults && (
+        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div>
+            <p className="text-blue-800">
+              {filteredCourses.length === 0 
+                ? `No courses found for "${searchQuery}"`
+                : `Found ${filteredCourses.length} course${filteredCourses.length === 1 ? '' : 's'} for "${searchQuery}"`
+              }
+            </p>
+          </div>
+
+          <button
+            onClick={clearSearch}
+            className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
+          >
+            Show All Courses
+          </button>
+        </div>
+      )}
       
       {enrolledCourses.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600">Enroll in courses to access lectures.</p>
+        </div>
+      ) : filteredCourses.length === 0 && showingSearchResults ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600">No courses match your search for "{searchQuery}".</p>
+          <button
+            onClick={clearSearch}
+            className="mt-4 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
+          >
+            View all courses
+          </button>
         </div>
       ) : (
         <>
@@ -215,7 +309,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                 onClick={loadMore}
                 className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
               >
-                Load More Courses ({enrolledCourses.length - displayCount} remaining)
+                Load More Courses ({filteredCourses.length - displayCount} remaining)
               </button>
             </div>
           )}
