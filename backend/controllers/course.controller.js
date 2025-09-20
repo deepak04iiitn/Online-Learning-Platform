@@ -63,16 +63,14 @@ export const getCourses = async (req, res, next) => {
     try {
         const courses = await Course.find()
             .populate('instructor', 'name email')
+            .populate('studentsEnrolled', 'name email') 
             .populate({
                 path: 'lectures',
                 select: 'title type order'
             })
             .sort({ createdAt: -1 });
 
-        res.status(200).json({
-            success: true,
-            courses
-        });
+        res.status(200).json(courses); 
 
     } catch (error) {
         next(error);

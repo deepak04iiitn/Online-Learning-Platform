@@ -70,19 +70,6 @@ export default function Header() {
                 Dashboard
               </Link>
 
-              {currentUser.role === 'Instructor' && (
-                <Link 
-                  to="/courses" 
-                  className={`px-3 py-2 text-sm font-medium transition-colors ${
-                    location.pathname === '/courses' 
-                      ? 'text-blue-600 border-b-2 border-blue-600' 
-                      : 'text-gray-700 hover:text-blue-600'
-                  }`}
-                >
-                  My Courses
-                </Link>
-              )}
-
             </nav>
           )}
 
@@ -198,20 +185,6 @@ export default function Header() {
               >
                 Dashboard
               </Link>
-
-              {currentUser.role === 'Instructor' && (
-                <Link
-                  to="/courses"
-                  onClick={closeMobileMenu}
-                  className={`block px-3 py-2 text-base font-medium transition-colors ${
-                    location.pathname === '/courses'
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }`}
-                >
-                  My Courses
-                </Link>
-              )}
 
               {/* Sign Out Button */}
               <button
