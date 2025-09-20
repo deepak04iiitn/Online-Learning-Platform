@@ -7,9 +7,10 @@ import SignUp from './pages/SignUp';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import Dashboard from './pages/Dashboard';
 
 export default function App() {
-  
+
   const { currentUser } = useSelector((state) => state.user);
 
   return (
@@ -19,12 +20,12 @@ export default function App() {
         <div className="flex-grow">
           <Routes>
             
-            <Route path='/sign-in' element={currentUser ? <Navigate to="/" /> : <SignIn />} />
-            <Route path='/sign-up' element={currentUser ? <Navigate to="/" /> : <SignUp />} />
-            <Route path='/' element={<ProtectedRoute element={<Home />} />} />
-            
-            {/* Catching all route and redirecting to home if authenticated and signin if not */}
-            <Route path="*" element={currentUser ? <Navigate to="/" /> : <Navigate to="/sign-in" />} />
+            <Route path='/sign-in' element={<SignIn />} />
+            <Route path='/sign-up' element={<SignUp />} />
+            <Route path='/' element={<Home />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
 
           </Routes>
         </div>
