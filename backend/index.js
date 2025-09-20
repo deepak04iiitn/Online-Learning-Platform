@@ -5,9 +5,12 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import courseRoutes from './routes/course.route.js';
+import lectureRoutes from './routes/lecture.route.js';
 
 dotenv.config();
 
+
+// Database connection
 mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
@@ -27,6 +30,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 
+
+// Global error handling middleware
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error!';
@@ -39,16 +44,20 @@ app.use((err, req, res, next) => {
 });
 
 
+// API endpoints
 app.use('/backend/auth', authRoutes);
 app.use('/backend/courses', courseRoutes);
+app.use('/backend/lectures', lectureRoutes);
 
 
+// Health check endpoint
 app.get('/backend/ping', (req, res) => {
   res.status(200).send('pong');
 });
 
 
-const PORT = process.env.PORT || 3000;
+// Starting the server
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}!`);
 });
