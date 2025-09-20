@@ -100,7 +100,8 @@ NODE_ENV=development
 
 ### 3. Install Dependencies
 
-#### Backend Dependencies
+#### Backend Dependencies 
+Being in root directory , run:
 ```bash
 npm install
 ```
@@ -130,8 +131,9 @@ net start MongoDB
 ### Development Mode
 
 #### Start Backend Server
+Being in root directory, run:
 ```bash
-npm run dev
+npm start
 ```
 The backend server will start on `http://localhost:3000`
 
