@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import authRoutes from './routes/auth.route.js';
 
 dotenv.config();
 
@@ -35,6 +36,9 @@ app.use((err, req, res, next) => {
         message,
     });
 });
+
+
+app.use('/backend/auth', authRoutes);
 
 
 app.get('/backend/ping', (req, res) => {
