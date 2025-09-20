@@ -6,6 +6,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.route.js';
 import courseRoutes from './routes/course.route.js';
 import lectureRoutes from './routes/lecture.route.js';
+import studentRoutes from './routes/student.route.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.use((err, req, res, next) => {
 app.use('/backend/auth', authRoutes);
 app.use('/backend/courses', courseRoutes);
 app.use('/backend/lectures', lectureRoutes);
+app.use('/backend/students', studentRoutes);
 
 
 // Health check endpoint
