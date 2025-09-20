@@ -25,6 +25,7 @@ export const verifyToken = (req, res, next) => {
 };
 
 
+// Role-based authorization middleware
 export const requireRole = (allowedRoles) => {
     return (req, res, next) => {
 
@@ -43,6 +44,7 @@ export const requireRole = (allowedRoles) => {
 };
 
 
+// Direct middlewares for specific roles
 export const requireInstructor = requireRole(['Instructor']);
 export const requireStudent = requireRole(['Student']);
 export const requireAnyRole = requireRole(['Instructor', 'Student']);
