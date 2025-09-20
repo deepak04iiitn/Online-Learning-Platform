@@ -25,7 +25,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 
-// Middleware for error handling
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error!';
@@ -41,7 +40,6 @@ app.use((err, req, res, next) => {
 app.get('/backend/ping', (req, res) => {
   res.status(200).send('pong');
 });
-
 
 
 const PORT = process.env.PORT || 3000;
