@@ -19,6 +19,13 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [displayCounts, setDisplayCounts] = useState({
+    myCourses: 6,
+    lectures: 6,
+    browseCourses: 6
+  });
+
+
   useEffect(() => {
     fetchEnrolledCourses();
     fetchAllCourses();
@@ -227,7 +234,7 @@ export default function StudentDashboard() {
   };
 
 
-  // Fixed quiz submission with proper scoring
+  // quiz submission with proper scoring
   const handleQuizSubmit = async (lecture, courseId) => {
     try {
       let score = 0;
@@ -336,6 +343,22 @@ export default function StudentDashboard() {
   };
 
 
+  const loadMoreItems = (section) => {
+    setDisplayCounts(prev => ({
+      ...prev,
+      [section]: prev[section] + 6
+    }));
+  };
+
+  
+  const resetDisplayCount = (section) => {
+    setDisplayCounts(prev => ({
+      ...prev,
+      [section]: 6
+    }));
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -389,9 +412,10 @@ export default function StudentDashboard() {
         ) : (
           <>
             {activeTab === 'overview' && <OverviewTab enrolledCourses={enrolledCourses} progress={progress} allCourses={allCourses} />}
-            {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} setActiveTab={setActiveTab} />}
-            {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={handleSetCurrentLecture} />}
-            {activeTab === 'browse' && <BrowseCoursesTab allCourses={allCourses} enrolledCourses={enrolledCourses} handleEnrollInCourse={handleEnrollInCourse} loading={loading} />}
+            {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} setActiveTab={setActiveTab} displayCount={displayCounts.myCourses} loadMore={() => loadMoreItems('myCourses')} />}
+            {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={handleSetCurrentLecture} displayCount={displayCounts.lectures} loadMore={() => loadMoreItems('lectures')} />}
+            {activeTab === 'browse' && <BrowseCoursesTab allCourses={allCourses} enrolledCourses={enrolledCourses} handleEnrollInCourse={handleEnrollInCourse} loading={loading} displayCount={displayCounts.browseCourses} loadMore={() => loadMoreItems('browseCourses')} resetDisplayCount={() => resetDisplayCount('browseCourses')} />}
+            
           </>
         )}
 

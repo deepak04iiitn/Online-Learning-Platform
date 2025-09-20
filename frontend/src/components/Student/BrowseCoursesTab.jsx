@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, loading }) => {
+const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, loading, displayCount, loadMore, resetDisplayCount }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -44,6 +44,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
         setSearchResults(data.courses || []);
         setHasSearched(true);
         setSearchError(null);
+        resetDisplayCount(); // Reset display count when new search is performed
       } else {
         setSearchError(data.message || 'Search failed');
         setSearchResults([]);
@@ -64,10 +65,13 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
     setSearchResults([]);
     setSearchError(null);
     setHasSearched(false);
+    resetDisplayCount(); 
   };
 
   // Determining which courses to display
   const coursesToDisplay = hasSearched ? availableSearchResults : availableCourses;
+  const coursesToShow = coursesToDisplay.slice(0, displayCount);
+  const hasMoreCourses = coursesToDisplay.length > displayCount;
   const showingSearchResults = hasSearched && searchQuery.trim();
 
   return (
@@ -151,7 +155,7 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
       )}
       
       {/* Courses Display */}
-      {coursesToDisplay.length === 0 ? (
+      {coursesToShow.length === 0 ? (
         <div className="text-center py-12">
 
           <p className="text-gray-600">
@@ -172,44 +176,57 @@ const BrowseCoursesTab = ({ allCourses, enrolledCourses, handleEnrollInCourse, l
 
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {coursesToDisplay.map(course => (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {coursesToShow.map(course => (
 
-            <div key={course._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col">
+              <div key={course._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col">
 
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
-              <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
-              
-              <div className="space-y-2 mb-4 flex-grow">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
+                <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
+                
+                <div className="space-y-2 mb-4 flex-grow">
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Instructor:</span>
-                  <span className="font-medium">{course.instructor?.name || 'N/A'}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Instructor:</span>
+                    <span className="font-medium">{course.instructor?.name || 'N/A'}</span>
+                  </div>
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Students:</span>
+                    <span className="font-medium">{course.studentsEnrolled?.length || 0}</span>
+                  </div>
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Lectures:</span>
+                    <span className="font-medium">{course.lectures?.length || 0}</span>
+                  </div>
+
                 </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Students:</span>
-                  <span className="font-medium">{course.studentsEnrolled?.length || 0}</span>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Lectures:</span>
-                  <span className="font-medium">{course.lectures?.length || 0}</span>
-                </div>
-
+                
+                <button
+                  onClick={() => handleEnrollInCourse(course._id)}
+                  disabled={loading}
+                  className="w-full cursor-pointer bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
+                >
+                  {loading ? 'Enrolling...' : 'Enroll Now'}
+                </button>
               </div>
-              
+            ))}
+
+          </div>
+          
+          {hasMoreCourses && (
+            <div className="text-center mt-6">
               <button
-                onClick={() => handleEnrollInCourse(course._id)}
-                disabled={loading}
-                className="w-full cursor-pointer bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
+                onClick={loadMore}
+                className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
               >
-                {loading ? 'Enrolling...' : 'Enroll Now'}
+                Load More Courses ({coursesToDisplay.length - displayCount} remaining)
               </button>
             </div>
-          ))}
-
-        </div>
+          )}
+        </>
       )}
 
     </div>
