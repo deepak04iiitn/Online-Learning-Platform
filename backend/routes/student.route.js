@@ -1,5 +1,5 @@
 import express from 'express';
-import { checkEnrollmentStatus, enrollInCourse, getEnrolledCourses, getProgressForCourse, markLectureCompleted, unenrollFromCourse } from '../controllers/student.controller.js';
+import { checkEnrollmentStatus, enrollInCourse, getEnrolledCourses, getProgressForCourse, markLectureCompleted, markLectureStarted, unenrollFromCourse } from '../controllers/student.controller.js';
 import { requireStudent, verifyToken } from '../utils/verifyUser.js';
 
 const router = express.Router();
@@ -14,6 +14,7 @@ router.get('/enrollment-status/:courseId', verifyToken, requireStudent, checkEnr
 
 // Progress tracking routes
 router.get('/progress/:courseId', verifyToken, requireStudent, getProgressForCourse);
+router.post('/mark-started/:lectureId', verifyToken, requireStudent, markLectureStarted);
 router.post('/mark-completed/:lectureId', verifyToken, requireStudent, markLectureCompleted);
 
 export default router;

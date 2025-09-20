@@ -36,6 +36,7 @@ export default function StudentDashboard() {
       if(response.ok) 
       {
         setEnrolledCourses(data);
+        // Fetch progress and lectures for all enrolled courses
         for (const course of data) {
           await fetchProgressForCourse(course._id);
           await fetchLecturesForCourse(course._id);
@@ -172,6 +173,31 @@ export default function StudentDashboard() {
   };
 
 
+  // Enhanced function to mark lecture as started
+  const markLectureStarted = async (lectureId, courseId) => {
+    try {
+      const response = await fetch(`/backend/students/mark-started/${lectureId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ courseId })
+      });
+      
+      if(response.ok) 
+      {
+        // Refresh progress to update UI immediately
+        await fetchProgressForCourse(courseId);
+      } else {
+        console.error('Failed to mark lecture as started');
+      }
+    } catch (err) {
+      console.error('Failed to mark lecture as started:', err);
+    }
+  };
+
+
   const markLectureCompleted = async (lectureId, courseId, score = null) => {
     try {
       const response = await fetch(`/backend/students/mark-completed/${lectureId}`, {
@@ -185,11 +211,12 @@ export default function StudentDashboard() {
       
       if(response.ok) 
       {
+        // Refresh progress to update UI immediately
         await fetchProgressForCourse(courseId);
         setCurrentLecture(null);
         setQuizAnswers({});
         setError(null);
-        console.log('Lecture completed successfully!');
+        console.log('Lecture completed successfully with score:', score);
       } else {
         const data = await response.json();
         setError(data.message);
@@ -200,21 +227,65 @@ export default function StudentDashboard() {
   };
 
 
-  const handleQuizSubmit = (lecture, courseId) => {
-    let score = 0;
-    const totalQuestions = lecture.questions.length;
-    
-    lecture.questions.forEach((question, index) => {
-      const selectedOptionIndex = quizAnswers[`${lecture._id}-${index}`];
-
-      if(selectedOptionIndex !== undefined && question.options && question.options[selectedOptionIndex]?.isCorrect) 
+  // Fixed quiz submission with proper scoring
+  const handleQuizSubmit = async (lecture, courseId) => {
+    try {
+      let score = 0;
+      const totalQuestions = lecture.questions?.length || 0;
+      
+      if(totalQuestions === 0) 
       {
-        score++;
+        setError('No questions found in this quiz');
+        return;
       }
-    });
+
+      // Checking the answers
+      lecture.questions.forEach((question, index) => {
+        const selectedOptionIndex = quizAnswers[`${lecture._id}-${index}`];
+        
+        if(selectedOptionIndex !== undefined && 
+            question.options && 
+            question.options[selectedOptionIndex]?.isCorrect) {
+          score++;
+        }
+      });
+      
+      await markLectureCompleted(lecture._id, courseId, {
+        correctAnswers: score,
+        totalQuestions: totalQuestions
+      });
+      
+    } catch (err) {
+      console.error('Error submitting quiz:', err);
+      setError('Failed to submit quiz');
+    }
+  };
+
+
+  // function to mark as started
+  const handleSetCurrentLecture = async (lectureData) => {
+    if(lectureData) 
+    {
+      // Checking if the lecture is not already completed or started
+      const courseProgress = progress[lectureData.courseId];
+      const completedLecture = courseProgress?.completedLectures?.find(
+        cl => {
+          if (!cl || !cl.lecture) return false;
+          const lectureId = typeof cl.lecture === 'object' && cl.lecture._id 
+            ? cl.lecture._id.toString() 
+            : cl.lecture.toString();
+          return lectureId === lectureData._id.toString();
+        }
+      );
+
+      // If lecture is not started yet, marking it as started
+      if(!completedLecture) 
+      {
+        await markLectureStarted(lectureData._id, lectureData.courseId);
+      }
+    }
     
-    const percentage = Math.round((score / totalQuestions) * 100);
-    markLectureCompleted(lecture._id, courseId, percentage);
+    setCurrentLecture(lectureData);
   };
 
 
@@ -228,6 +299,7 @@ export default function StudentDashboard() {
     {
       const previousLecture = courseLectures[lectureIndex - 1];
       const completedLecture = courseProgress.completedLectures?.find(cl => {
+        if (!cl || !cl.lecture) return false;
         const lectureId = typeof cl.lecture === 'object' && cl.lecture._id ? cl.lecture._id : cl.lecture;
         return lectureId.toString() === previousLecture._id.toString();
       });
@@ -244,11 +316,23 @@ export default function StudentDashboard() {
 
     if(!courseProgress) return 'not-started';
 
-    const completedLecture = courseProgress.completedLectures.find(
-      cl => cl && cl.lecture && (cl.lecture === lecture._id || cl.lecture.toString() === lecture._id.toString())
+    const completedLecture = courseProgress.completedLectures?.find(
+      cl => {
+        if (!cl || !cl.lecture) return false;
+        const lectureId = typeof cl.lecture === 'object' && cl.lecture._id 
+          ? cl.lecture._id.toString() 
+          : cl.lecture.toString();
+        return lectureId === lecture._id.toString();
+      }
     );
 
-    return completedLecture?.isCompleted ? 'completed' : 'not-started';
+    if (completedLecture?.isCompleted) {
+      return 'completed';
+    } else if (completedLecture && !completedLecture.isCompleted) {
+      return 'started';
+    } else {
+      return 'not-started';
+    }
   };
 
 
@@ -266,6 +350,12 @@ export default function StudentDashboard() {
         {error && (
           <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             {error}
+            <button 
+              onClick={() => setError(null)} 
+              className="ml-2 text-red-900 hover:text-red-700"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -299,8 +389,8 @@ export default function StudentDashboard() {
         ) : (
           <>
             {activeTab === 'overview' && <OverviewTab enrolledCourses={enrolledCourses} progress={progress} allCourses={allCourses} />}
-            {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} />}
-            {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={setCurrentLecture} />}
+            {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} setActiveTab={setActiveTab} />}
+            {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={handleSetCurrentLecture} />}
             {activeTab === 'browse' && <BrowseCoursesTab allCourses={allCourses} enrolledCourses={enrolledCourses} handleEnrollInCourse={handleEnrollInCourse} loading={loading} />}
           </>
         )}

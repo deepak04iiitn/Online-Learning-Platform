@@ -12,6 +12,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
       </div>
     ) : (
       enrolledCourses.map(course => {
+
         const courseLectures = lectures[course._id] || [];
         
         return (
@@ -30,9 +31,50 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                   const isAccessible = isLectureAccessible(lecture, course._id, index);
                   const status = getLectureStatus(lecture, course._id);
                   const courseProgress = progress[course._id];
+                  
+                  // Fixed: More robust lecture matching
                   const completedLecture = courseProgress?.completedLectures?.find(
-                    cl => cl && cl.lecture && (cl.lecture === lecture._id || cl.lecture.toString() === lecture._id.toString())
+                    cl => {
+                      if (!cl || !cl.lecture) return false;
+                      const lectureId = typeof cl.lecture === 'object' && cl.lecture._id 
+                        ? cl.lecture._id.toString() 
+                        : cl.lecture.toString();
+                      return lectureId === lecture._id.toString();
+                    }
                   );
+
+                  const getStatusDisplay = () => {
+                    if(completedLecture?.isCompleted) 
+                    {
+                      return {
+                        text: 'Completed',
+                        className: 'bg-green-100 text-green-800'
+                      };
+                    } else if (completedLecture && !completedLecture.isCompleted) {
+                      return {
+                        text: 'Started',
+                        className: 'bg-blue-100 text-blue-800'
+                      };
+                    } else {
+                      return {
+                        text: 'Not Started',
+                        className: 'bg-yellow-100 text-yellow-800'
+                      };
+                    }
+                  };
+
+                  const statusDisplay = getStatusDisplay();
+
+                  const getButtonText = () => {
+                    if(completedLecture?.isCompleted) 
+                    {
+                      return 'Review';
+                    } else if (completedLecture && !completedLecture.isCompleted) {
+                      return 'Continue';
+                    } else {
+                      return 'Start';
+                    }
+                  };
 
                   return (
                     <div 
@@ -52,6 +94,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                           </h4>
                           
                           <div className="flex items-center space-x-4 mt-2 text-sm">
+                            
                             <span className={`px-2 py-1 rounded text-xs ${
                               lecture.type === 'Reading' 
                                 ? 'bg-blue-100 text-blue-800' 
@@ -60,12 +103,8 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                               {lecture.type}
                             </span>
                             
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              status === 'completed'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {status === 'completed' ? 'Completed' : 'Not Started'}
+                            <span className={`px-2 py-1 rounded text-xs ${statusDisplay.className}`}>
+                              {statusDisplay.text}
                             </span>
                             
                             {!isAccessible && (
@@ -74,10 +113,18 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                               </span>
                             )}
                             
-                            {completedLecture && completedLecture.score !== null && completedLecture.score !== undefined && (
-                              <span className="text-gray-600">
-                                Score: {completedLecture.score}%
-                              </span>
+                            {/* Score Display for quiz lectures with scores */}
+                            {lecture.type === 'Quiz' && completedLecture && 
+                                completedLecture.isCompleted && (
+                                <span className="text-gray-600 font-medium">
+                                    {completedLecture.correctAnswers !== null && completedLecture.totalQuestions !== null ? (
+                                    `Score: ${completedLecture.correctAnswers}/${completedLecture.totalQuestions}`
+                                    ) : completedLecture.score !== null && completedLecture.score !== undefined ? (
+                                    `Score: ${completedLecture.score}%`
+                                    ) : (
+                                    'Score: N/A'
+                                    )}
+                                </span>
                             )}
                           </div>
                         </div>
@@ -91,7 +138,7 @@ const LecturesTab = ({ enrolledCourses, lectures, progress, isLectureAccessible,
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                         >
-                          {status === 'completed' ? 'Review' : 'Start'}
+                          {getButtonText()}
                         </button>
                       </div>
                     </div>

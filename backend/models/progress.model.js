@@ -31,6 +31,15 @@ const progressSchema = new mongoose.Schema(
           default: null,
         },
 
+        correctAnswers: {
+          type: Number,
+          default: null
+        },
+
+        totalQuestions: {
+          type: Number, 
+          default: null
+        }
       },
     ],
   },

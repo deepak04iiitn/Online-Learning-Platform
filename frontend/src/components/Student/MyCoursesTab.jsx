@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromCourse }) => (
+const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromCourse, setActiveTab }) => (
   <div className="space-y-6">
 
     <h2 className="text-2xl font-bold text-gray-800">My Courses</h2>

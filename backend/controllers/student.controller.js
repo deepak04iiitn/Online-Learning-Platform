@@ -230,6 +230,83 @@ export const getProgressForCourse = async (req, res, next) => {
 };
 
 
+// Marking lecture as started (but not completed)
+export const markLectureStarted = async (req, res, next) => {
+    try {
+        const { lectureId } = req.params;
+        const { courseId } = req.body;
+        const studentId = req.user.id;
+
+        // Checking if the student is enrolled in the course
+        const student = await User.findById(studentId);
+        const isEnrolled = student.enrolledCourses.some(
+            course => course.toString() === courseId.toString()
+        );
+
+        if(!isEnrolled) 
+        {
+            return next(errorHandler(403, 'Not enrolled in this course'));
+        }
+
+        // Verifying that the lecture exists and belongs to the course
+        const lecture = await Lecture.findById(lectureId);
+        if(!lecture) 
+        {
+            return next(errorHandler(404, 'Lecture not found'));
+        }
+
+        if(lecture.course.toString() !== courseId) 
+        {
+            return next(errorHandler(400, 'Lecture does not belong to the specified course'));
+        }
+
+        // Finding or creating progress for this course
+        let progress = await Progress.findOne({
+            student: studentId,
+            course: courseId
+        });
+
+        if(!progress) 
+        {
+            progress = new Progress({
+                student: studentId,
+                course: courseId,
+                completedLectures: []
+            });
+        }
+
+        // Checking if the lecture progress already exists
+        const existingLectureIndex = progress.completedLectures.findIndex(
+            cl => cl.lecture.toString() === lectureId.toString()
+        );
+
+        if(existingLectureIndex === -1) 
+        {
+            // Adding new lecture progress as started (not completed)
+            progress.completedLectures.push({
+                lecture: lectureId,
+                isCompleted: false,
+                score: null
+            });
+
+            await progress.save();
+            console.log('Lecture marked as started:', lectureId, 'for course:', courseId);
+        }
+
+        // If already exists, not modifying (might already be completed or started)
+
+        res.status(200).json({
+            success: true,
+            message: 'Lecture marked as started'
+        });
+
+    } catch (error) {
+        console.error('Error marking lecture as started:', error);
+        next(error);
+    }
+};
+
+
 // Marking the lecture as completed
 export const markLectureCompleted = async (req, res, next) => {
     try {
@@ -237,13 +314,22 @@ export const markLectureCompleted = async (req, res, next) => {
         const { courseId, score } = req.body;
         const studentId = req.user.id;
 
+        console.log('Marking lecture as completed:', {
+            lectureId,
+            courseId,
+            score,
+            studentId
+        });
+
         // Verify that the lecture exists and belongs to the course
         const lecture = await Lecture.findById(lectureId);
-        if (!lecture) {
+        if(!lecture) 
+        {
             return next(errorHandler(404, 'Lecture not found'));
         }
 
-        if (lecture.course.toString() !== courseId) {
+        if(lecture.course.toString() !== courseId) 
+        {
             return next(errorHandler(400, 'Lecture does not belong to the specified course'));
         }
 
@@ -252,7 +338,8 @@ export const markLectureCompleted = async (req, res, next) => {
             course: courseId
         });
 
-        if (!progress) {
+        if(!progress) 
+        {
             progress = new Progress({
                 student: studentId,
                 course: courseId,
@@ -260,35 +347,51 @@ export const markLectureCompleted = async (req, res, next) => {
             });
         }
 
-        // Checking if the lecture is already completed
+        // Find existing lecture progress
         const existingLectureIndex = progress.completedLectures.findIndex(
-            cl => cl.lecture.toString() === lectureId
+            cl => cl.lecture && cl.lecture.toString() === lectureId.toString()
         );
 
-        if (existingLectureIndex !== -1) {
+        if(existingLectureIndex !== -1) 
+        {
             // Update existing completion record
             progress.completedLectures[existingLectureIndex].isCompleted = true;
-            if (score !== null && score !== undefined) {
-                progress.completedLectures[existingLectureIndex].score = score;
+            if (score !== null && score !== undefined) 
+            {
+                if(typeof score === 'object') 
+                {
+                    progress.completedLectures[existingLectureIndex].correctAnswers = score.correctAnswers;
+                    progress.completedLectures[existingLectureIndex].totalQuestions = score.totalQuestions;
+                } else {
+                    // Fallback for percentage format
+                    progress.completedLectures[existingLectureIndex].score = score;
+                }
             }
+            
         } else {
-            // Add new completion record
-            progress.completedLectures.push({
+            // Adding new completion record
+            const newLectureProgress = {
                 lecture: lectureId,
                 isCompleted: true,
-                score: score
-            });
+                correctAnswers: score?.correctAnswers || null,
+                totalQuestions: score?.totalQuestions || null,
+                score: typeof score === 'number' ? score : null 
+            };
+            progress.completedLectures.push(newLectureProgress);
+            console.log('Added new lecture progress:', newLectureProgress);
         }
 
         await progress.save();
         
-        console.log('Lecture marked as completed:', lectureId, 'for course:', courseId);
+        console.log('Lecture marked as completed successfully');
         
         res.status(200).json({ 
             success: true, 
-            message: 'Lecture marked as completed'
+            message: 'Lecture marked as completed',
+            progress: progress
         });
     } catch (error) {
+        console.error('Error marking lecture as completed:', error);
         next(error);
     }
 };
