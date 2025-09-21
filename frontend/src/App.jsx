@@ -8,6 +8,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
+import SessionManager from './components/SessionManager';
 
 export default function App() {
 
@@ -15,6 +16,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <SessionManager />
       <div className="flex flex-col min-h-screen">
         <Header />
         <div className="flex-grow">
