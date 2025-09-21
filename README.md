@@ -2,6 +2,15 @@
 
 A comprehensive full-stack web application that enables instructors to create courses and manage lectures, while allowing students to browse courses, track progress, and complete learning materials including quizzes.
 
+## Live Link:
+- https://online-learning-platform-otgr.onrender.com
+
+## Demo Video:
+- https://youtu.be/VGOY0K11tnY
+
+## Published API Documentation
+- https://documenter.getpostman.com/view/47323260/2sB3HtFGvx
+
 ## Features
 
 ### User Management
@@ -74,6 +83,115 @@ A comprehensive full-stack web application that enables instructors to create co
 - **Role-Based Access Control**: Middleware functions for protecting routes based on user roles
 - **Input Validation**: Comprehensive validation on both client and server sides
 - **Secure Authentication**: HTTP-only cookies with environment-based security settings
+
+## Database Schemas
+
+The application uses MongoDB with Mongoose ODM for data modeling. Below are the detailed schema definitions:
+
+### User Schema
+```javascript
+{
+  name: String (required, trimmed),
+  email: String (required, unique, lowercase, trimmed),
+  password: String (required, min 6 characters),
+  role: String (enum: ["Instructor", "Student"], required),
+  coursesCreated: [ObjectId] (ref: "Course"),
+  enrolledCourses: [ObjectId] (ref: "Course"),
+  timestamps: true
+}
+```
+
+### Course Schema
+```javascript
+{
+  title: String (required, trimmed),
+  description: String (required),
+  instructor: ObjectId (ref: "User", required),
+  lectures: [ObjectId] (ref: "Lecture"),
+  studentsEnrolled: [ObjectId] (ref: "User"),
+  timestamps: true
+}
+```
+
+### Lecture Schema
+```javascript
+{
+  title: String (required, trimmed),
+  type: String (enum: ["Reading", "Quiz"], required),
+  content: String (default: ""),
+  questions: [ObjectId] (ref: "Question"),
+  course: ObjectId (ref: "Course", required),
+  order: Number (required),
+  timestamps: true
+}
+```
+
+### Question Schema
+```javascript
+{
+  questionText: String (required),
+  options: [
+    {
+      text: String (required),
+      isCorrect: Boolean (default: false)
+    }
+  ]
+}
+```
+
+### Progress Schema
+```javascript
+{
+  student: ObjectId (ref: "User", required),
+  course: ObjectId (ref: "Course", required),
+  completedLectures: [
+    {
+      lecture: ObjectId (ref: "Lecture"),
+      isCompleted: Boolean (default: false),
+      isPassed: Boolean (default: true),
+      score: Number (default: null),
+      correctAnswers: Number (default: null),
+      totalQuestions: Number (default: null)
+    }
+  ],
+  timestamps: true
+}
+```
+
+### Schema Relationships
+
+#### One-to-Many Relationships
+- **User → Courses**: An instructor can create multiple courses
+- **User → Enrollments**: A student can enroll in multiple courses
+- **Course → Lectures**: A course can have multiple lectures
+- **Lecture → Questions**: A quiz lecture can have multiple questions
+
+#### Many-to-Many Relationships
+- **Users ↔ Courses**: Students can enroll in multiple courses, courses can have multiple students
+
+#### Tracking Relationships
+- **Progress**: Links students to their course progress with detailed completion tracking
+- **Lecture Completion**: Tracks individual lecture completion with scoring for quiz types
+
+### Data Flow Examples
+
+#### Course Creation Flow
+1. Instructor creates course → Course document created
+2. Course ID added to instructor's `coursesCreated` array
+3. Lectures added → Lecture documents created with course reference
+4. Questions added to quiz lectures → Question documents created
+
+#### Student Enrollment Flow
+1. Student enrolls → Course ID added to student's `enrolledCourses`
+2. Student ID added to course's `studentsEnrolled`
+3. Progress document created linking student and course
+4. Lecture completion tracked in progress document
+
+#### Progress Tracking Flow
+1. Student starts lecture → Progress document updated
+2. Reading lecture completed → `isCompleted: true, isPassed: true`
+3. Quiz lecture completed → Score calculated, `isCompleted: true`, `isPassed` based on score
+4. Next lecture unlocked based on completion status
 
 ## Prerequisites
 
@@ -192,9 +310,6 @@ npm start
 ### Utility Routes
 - `GET /backend/ping` - Health check endpoint
 
-## Published API Documentation
-- `https://documenter.getpostman.com/view/47323260/2sB3HtFGvx`
-
 ## Project Structure
 
 ```
@@ -239,5 +354,3 @@ online-learning-platform/
 3. Commit changes (`git commit -am 'Add new feature'`)
 4. Push to branch (`git push origin feature/new-feature`)
 5. Create a Pull Request
-
-
