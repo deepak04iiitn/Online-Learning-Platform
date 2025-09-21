@@ -11,6 +11,14 @@ A comprehensive full-stack web application that enables instructors to create co
 ## Published API Documentation
 - https://documenter.getpostman.com/view/47323260/2sB3HtFGvx
 
+## Testing Credentials
+- **Instructor**:
+  - **Email**: instructor@test.com
+  - **Password**: password123
+- **Student**:
+  - **Email**: student@test.com
+  - **Password**: password321
+
 ## Features
 
 ### User Management
