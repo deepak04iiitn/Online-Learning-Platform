@@ -354,3 +354,35 @@ online-learning-platform/
 3. Commit changes (`git commit -am 'Add new feature'`)
 4. Push to branch (`git push origin feature/new-feature`)
 5. Create a Pull Request
+
+## Screenshots:
+<img width="1898" height="826" alt="image" src="https://github.com/user-attachments/assets/9c0a2f5c-be6c-4a26-81bd-a926ba39f798" />
+<img width="1901" height="825" alt="image" src="https://github.com/user-attachments/assets/89313d90-fc19-4a14-b19c-e30bbacad572" />
+<img width="1893" height="824" alt="image" src="https://github.com/user-attachments/assets/43b8849f-276f-4498-af3b-47ed5fdb3d64" />
+<img width="1899" height="817" alt="image" src="https://github.com/user-attachments/assets/461d9a92-a4b5-44f9-bc16-2b377d72bef8" />
+<img width="1893" height="802" alt="image" src="https://github.com/user-attachments/assets/7a1d7b24-557f-4355-9c14-95ed1c545188" />
+<img width="1897" height="788" alt="image" src="https://github.com/user-attachments/assets/5b0b01c2-43f3-4573-b943-eb78c5bf961f" />
+<img width="1889" height="820" alt="image" src="https://github.com/user-attachments/assets/ff1981c0-24cf-466b-b52d-93441b9c0bfc" />
+<img width="667" height="616" alt="image" src="https://github.com/user-attachments/assets/a4a382e1-4961-4c8f-810a-4bddae18159b" />
+<img width="1003" height="569" alt="image" src="https://github.com/user-attachments/assets/21d2ddae-201c-4e86-9743-0c1fbbc43c52" />
+<img width="1894" height="822" alt="image" src="https://github.com/user-attachments/assets/0f420bbd-aaa5-420c-a1f6-656d81af975e" />
+<img width="1899" height="690" alt="image" src="https://github.com/user-attachments/assets/98bd18e2-5081-490c-8d03-2291e9bd0259" />
+<img width="1894" height="809" alt="image" src="https://github.com/user-attachments/assets/cadf33da-9dc2-4b97-95df-97d7c8f4d591" />
+<img width="1896" height="811" alt="image" src="https://github.com/user-attachments/assets/6798ca39-e32d-462e-8109-fc463ca90862" />
+<img width="1893" height="822" alt="image" src="https://github.com/user-attachments/assets/067612dc-492c-4319-af76-72abd33d11c9" />
+<img width="1341" height="572" alt="image" src="https://github.com/user-attachments/assets/5bb7c9f9-5147-4733-9ccd-edef92002d11" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
