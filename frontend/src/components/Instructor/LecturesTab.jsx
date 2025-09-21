@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import ConfirmationModal from '../ConfirmationModal';
 
 const LecturesTab = ({ courses, lectures, handleEditLecture, handleDeleteLecture }) => {
   const [expandedCourses, setExpandedCourses] = useState({});
   const [visibleCourses, setVisibleCourses] = useState(6);
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    lectureId: null,
+    courseId: null,
+    lectureName: ''
+  });
 
   const toggleCourseExpansion = (courseId) => {
     setExpandedCourses(prev => ({
@@ -14,6 +21,31 @@ const LecturesTab = ({ courses, lectures, handleEditLecture, handleDeleteLecture
 
   const loadMoreCourses = () => {
     setVisibleCourses(prev => prev + 6);
+  };
+
+  const openDeleteConfirmation = (lectureId, courseId, lectureName) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      lectureId,
+      courseId,
+      lectureName
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      lectureId: null,
+      courseId: null,
+      lectureName: ''
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.lectureId && deleteConfirmation.courseId) {
+      handleDeleteLecture(deleteConfirmation.lectureId, deleteConfirmation.courseId);
+      closeDeleteConfirmation();
+    }
   };
 
   // Getting courses that have lectures
@@ -81,7 +113,7 @@ const LecturesTab = ({ courses, lectures, handleEditLecture, handleDeleteLecture
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteLecture(lecture._id, courseId)}
+                            onClick={() => openDeleteConfirmation(lecture._id, courseId, lecture.title)}
                             className="text-red-600 hover:text-red-800 text-sm cursor-pointer transition-colors duration-200"
                           >
                             Delete
@@ -152,6 +184,18 @@ const LecturesTab = ({ courses, lectures, handleEditLecture, handleDeleteLecture
           )}
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={confirmDelete}
+        title="Delete Lecture"
+        message={`Are you sure you want to delete the lecture "${deleteConfirmation.lectureName}"? This action cannot be undone.`}
+        confirmText="Delete Lecture"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

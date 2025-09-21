@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ConfirmationModal from '../ConfirmationModal';
 
 const CoursesTab = ({
   courses,
@@ -12,9 +13,37 @@ const CoursesTab = ({
   handleDeleteCourse
 }) => {
   const [visibleCourses, setVisibleCourses] = useState(6);
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    courseId: null,
+    courseName: ''
+  });
 
   const loadMoreCourses = () => {
     setVisibleCourses(prev => prev + 6);
+  };
+
+  const openDeleteConfirmation = (courseId, courseName) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      courseId,
+      courseName
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      courseId: null,
+      courseName: ''
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.courseId) {
+      handleDeleteCourse(deleteConfirmation.courseId);
+      closeDeleteConfirmation();
+    }
   };
 
   const showLoadMoreButton = visibleCourses < courses.length;
@@ -83,7 +112,7 @@ const CoursesTab = ({
                   </button>
 
                   <button
-                    onClick={() => handleDeleteCourse(course._id)}
+                    onClick={() => openDeleteConfirmation(course._id, course.title)}
                     className="bg-red-600 text-white cursor-pointer px-3 py-2 rounded text-sm hover:bg-red-700 transition duration-200"
                   >
                     Delete
@@ -112,6 +141,18 @@ const CoursesTab = ({
           )}
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={confirmDelete}
+        title="Delete Course"
+        message={`Are you sure you want to delete "${deleteConfirmation.courseName}"? This action cannot be undone and will also remove all associated lectures.`}
+        confirmText="Delete Course"
+        cancelText="Cancel"
+        type="danger"
+      />
       
     </div>
   );
