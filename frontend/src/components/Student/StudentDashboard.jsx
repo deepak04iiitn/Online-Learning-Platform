@@ -1,5 +1,3 @@
-// Fixed StudentDashboard.jsx - Key fixes for data fetching and display
-
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import OverviewTab from './OverviewTab';
