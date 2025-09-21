@@ -80,7 +80,7 @@ export const signin = async (req, res, next) => {
 
         if(!validUser) 
         {
-            return next(errorHandler(404, 'Invalid credentials!'));
+            return next(errorHandler(400, 'Invalid credentials!'));
         }
 
         const validPassword = bcryptjs.compareSync(password, validUser.password);
