@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import path from 'path';
+
 import authRoutes from './routes/auth.route.js';
 import courseRoutes from './routes/course.route.js';
 import lectureRoutes from './routes/lecture.route.js';
@@ -22,6 +24,7 @@ mongoose
     });
 
 
+const __dirname = path.resolve();
 const app = express();
 
 app.use(cors());
@@ -55,6 +58,20 @@ app.use('/backend/students', studentRoutes);
 // Health check endpoint
 app.get('/backend/ping', (req, res) => {
   res.status(200).send('pong');
+});
+
+
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+// Handling frontend routes - only catching routes that don't start with /backend
+app.get(/^(?!\/backend).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
+});
+
+
+// Global error handler
+app.use((err, req, res, next) => {
+  res.status(err.statusCode || 500).json({ error: err.message || 'Internal Server Error' });
 });
 
 
