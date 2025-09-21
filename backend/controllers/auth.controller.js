@@ -41,7 +41,7 @@ export const signup = async (req , res , next) => {
             return next(errorHandler(400, 'User already exists with this email'));
         }
 
-        const hashedPassword = bcryptjs.hashSync(password, 10);
+        const hashedPassword = await bcryptjs.hash(password, 10);
 
         const newUser = new User({
             name,
@@ -83,7 +83,7 @@ export const signin = async (req, res, next) => {
             return next(errorHandler(400, 'Invalid credentials!'));
         }
 
-        const validPassword = bcryptjs.compareSync(password, validUser.password);
+        const validPassword = await bcryptjs.compare(password, validUser.password);
 
         if(!validPassword) 
         {
