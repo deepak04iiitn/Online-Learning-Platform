@@ -455,8 +455,8 @@ export default function StudentDashboard() {
         ) : (
           <>
             {activeTab === 'overview' && <OverviewTab enrolledCourses={enrolledCourses} progress={progress} allCourses={allCourses} />}
-            {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} setActiveTab={setActiveTab} displayCount={displayCounts.myCourses} loadMore={() => loadMoreItems('myCourses')} />}
-            {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={handleSetCurrentLecture} displayCount={displayCounts.lectures} loadMore={() => loadMoreItems('lectures')} />}
+            {activeTab === 'my-courses' && <MyCoursesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} handleUnenrollFromCourse={handleUnenrollFromCourse} setActiveTab={setActiveTab} displayCount={displayCounts.myCourses} resetDisplayCount={resetDisplayCount} loadMore={() => loadMoreItems('myCourses')} />}
+            {activeTab === 'lectures' && <LecturesTab enrolledCourses={enrolledCourses} lectures={lectures} progress={progress} isLectureAccessible={isLectureAccessible} getLectureStatus={getLectureStatus} setCurrentLecture={handleSetCurrentLecture} displayCount={displayCounts.lectures} resetDisplayCount={resetDisplayCount}  loadMore={() => loadMoreItems('lectures')} />}
             {activeTab === 'browse' && <BrowseCoursesTab allCourses={allCourses} enrolledCourses={enrolledCourses} handleEnrollInCourse={handleEnrollInCourse} loading={loading} displayCount={displayCounts.browseCourses} loadMore={() => loadMoreItems('browseCourses')} resetDisplayCount={() => resetDisplayCount('browseCourses')} />}
           </>
         )}

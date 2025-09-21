@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import ConfirmationModal from '../ConfirmationModal';
 
-const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromCourse, setActiveTab, displayCount, loadMore }) => {
+const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromCourse, setActiveTab, displayCount, resetDisplayCount, loadMore }) => {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
   
   // Unenroll confirmation state
@@ -15,14 +18,58 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
   });
 
   // Search functionality 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    setHasSearched(true);
+    
+    if(!searchQuery.trim()) {
+      setSearchError('Please enter a search term');
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+    setHasSearched(false);
+
+    try {
+      const response = await fetch(`/backend/courses/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+      
+      if(response.ok) {
+        // Filtering search results to only show enrolled courses
+        const allSearchResults = data.courses || [];
+        const enrolledCourseIds = enrolledCourses.map(course => course._id);
+        const filteredResults = allSearchResults.filter(course => 
+          enrolledCourseIds.includes(course._id)
+        );
+        
+        setSearchResults(filteredResults);
+        setHasSearched(true);
+        setSearchError(null);
+        resetDisplayCount(); 
+      } else {
+        setSearchError(data.message || 'Search failed');
+        setSearchResults([]);
+        setHasSearched(false);
+      }
+    } catch (error) {
+      setSearchError('Failed to search courses');
+      setSearchResults([]);
+      setHasSearched(false);
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const clearSearch = () => {
     setSearchQuery('');
+    setSearchResults([]);
+    setSearchError(null);
     setHasSearched(false);
+    resetDisplayCount(); 
   };
 
   // Unenroll confirmation functions
@@ -49,18 +96,6 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
     }
   };
 
-  // Filtering courses based on search
-  const getFilteredCourses = () => {
-    if(!hasSearched || !searchQuery.trim()) {
-      return enrolledCourses;
-    }
-    
-    return enrolledCourses.filter(course =>
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
-
   // calculation of progress data
   const getProgressData = (course) => {
     const courseLectures = lectures?.[course._id] || [];
@@ -85,9 +120,10 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
     };
   };
 
-  const filteredCourses = getFilteredCourses();
-  const coursesToShow = filteredCourses.slice(0, displayCount);
-  const hasMoreCourses = filteredCourses.length > displayCount;
+  // Determining which courses to display
+  const coursesToDisplay = hasSearched ? searchResults : enrolledCourses;
+  const coursesToShow = coursesToDisplay.slice(0, displayCount);
+  const hasMoreCourses = coursesToDisplay.length > displayCount;
   const showingSearchResults = hasSearched && searchQuery.trim();
 
   return (
@@ -105,6 +141,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search your courses..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={isSearching}
             />
 
             {searchQuery && (
@@ -112,6 +149,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
                 type="button"
                 onClick={clearSearch}
                 className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                disabled={isSearching}
               >
                 ✕
               </button>
@@ -120,10 +158,10 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
 
           <button
             type="submit"
-            disabled={!searchQuery.trim()}
+            disabled={isSearching || !searchQuery.trim()}
             className="cursor-pointer px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            Search
+            {isSearching ? 'Searching...' : 'Search'}
           </button>
         </form>
       </div>
@@ -133,9 +171,9 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
         <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div>
             <p className="text-blue-800">
-              {filteredCourses.length === 0 
+              {searchResults.length === 0 
                 ? `No courses found for "${searchQuery}"`
-                : `Found ${filteredCourses.length} course${filteredCourses.length === 1 ? '' : 's'} for "${searchQuery}"`
+                : `Found ${searchResults.length} course${searchResults.length === 1 ? '' : 's'} for "${searchQuery}"`
               }
             </p>
           </div>
@@ -146,6 +184,13 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
           >
             Show All Courses
           </button>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {searchError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {searchError}
         </div>
       )}
       
@@ -164,15 +209,22 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
             Browse Courses
           </button>
         </div>
-      ) : filteredCourses.length === 0 && showingSearchResults ? (
+      ) : coursesToShow.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-600">No courses match your search for "{searchQuery}".</p>
-          <button
-            onClick={clearSearch}
-            className="mt-4 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
-          >
-            View all courses
-          </button>
+          <p className="text-gray-600">
+            {showingSearchResults 
+              ? `No courses match your search for "${searchQuery}".`
+              : 'No courses available.'
+            }
+          </p>
+          {showingSearchResults && (
+            <button
+              onClick={clearSearch}
+              className="mt-4 cursor-pointer text-blue-600 hover:text-blue-800 font-medium"
+            >
+              View all courses
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -279,7 +331,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
                 onClick={loadMore}
                 className="bg-blue-600 text-white cursor-pointer px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
               >
-                Load More Courses ({filteredCourses.length - displayCount} remaining)
+                Load More Courses ({coursesToDisplay.length - displayCount} remaining)
               </button>
             </div>
           )}
