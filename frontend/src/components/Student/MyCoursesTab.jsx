@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
+import ConfirmationModal from '../ConfirmationModal';
 
 const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromCourse, setActiveTab, displayCount, loadMore }) => {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  
+  // Unenroll confirmation state
+  const [unenrollConfirmation, setUnenrollConfirmation] = useState({
+    isOpen: false,
+    courseId: null,
+    courseName: ''
+  });
 
   // Search functionality 
   const handleSearch = (e) => {
@@ -15,6 +23,30 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
   const clearSearch = () => {
     setSearchQuery('');
     setHasSearched(false);
+  };
+
+  // Unenroll confirmation functions
+  const openUnenrollConfirmation = (courseId, courseName) => {
+    setUnenrollConfirmation({
+      isOpen: true,
+      courseId,
+      courseName
+    });
+  };
+
+  const closeUnenrollConfirmation = () => {
+    setUnenrollConfirmation({
+      isOpen: false,
+      courseId: null,
+      courseName: ''
+    });
+  };
+
+  const confirmUnenroll = () => {
+    if (unenrollConfirmation.courseId && handleUnenrollFromCourse) {
+      handleUnenrollFromCourse(unenrollConfirmation.courseId);
+      closeUnenrollConfirmation();
+    }
   };
 
   // Filtering courses based on search
@@ -229,7 +261,7 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
                       View Lectures
                     </button>
                     <button
-                      onClick={() => handleUnenrollFromCourse && handleUnenrollFromCourse(course._id)}
+                      onClick={() => openUnenrollConfirmation(course._id, course.title)}
                       className="bg-red-600 text-white cursor-pointer px-3 py-2 rounded text-sm hover:bg-red-700 transition duration-200 font-medium"
                       title="Unenroll from course"
                     >
@@ -253,6 +285,18 @@ const MyCoursesTab = ({ enrolledCourses, lectures, progress, handleUnenrollFromC
           )}
         </>
       )}
+
+      {/* Unenroll Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={unenrollConfirmation.isOpen}
+        onClose={closeUnenrollConfirmation}
+        onConfirm={confirmUnenroll}
+        title="Unenroll from Course"
+        message={`Are you sure you want to unenroll from "${unenrollConfirmation.courseName}"? You will lose access to all course materials and your progress will be saved but not accessible unless you re-enroll.`}
+        confirmText="Unenroll"
+        cancelText="Cancel"
+        type="warning"
+      />
 
     </div>
   );

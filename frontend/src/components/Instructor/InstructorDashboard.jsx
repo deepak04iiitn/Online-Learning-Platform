@@ -218,7 +218,6 @@ export default function InstructorDashboard() {
 
 
   const handleDeleteCourse = async (courseId) => {
-    if(!window.confirm('Are you sure you want to delete this course?')) return;
     
     try {
       const response = await fetch(`/backend/courses/${courseId}/delete`, {
@@ -243,7 +242,6 @@ export default function InstructorDashboard() {
 
 
   const handleDeleteLecture = async (lectureId, courseId) => {
-    if(!window.confirm('Are you sure you want to delete this lecture?')) return;
     
     try {
       const response = await fetch(`/backend/lectures/${lectureId}/delete`, {

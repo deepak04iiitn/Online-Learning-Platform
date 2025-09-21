@@ -178,7 +178,6 @@ export default function StudentDashboard() {
   };
 
   const handleUnenrollFromCourse = async (courseId) => {
-    if(!window.confirm('Are you sure you want to unenroll from this course?')) return;
     
     setLoading(true);
 
