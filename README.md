@@ -192,6 +192,9 @@ npm start
 ### Utility Routes
 - `GET /backend/ping` - Health check endpoint
 
+## Published API Documentation
+- `https://documenter.getpostman.com/view/47323260/2sB3HtFGvx`
+
 ## Project Structure
 
 ```
