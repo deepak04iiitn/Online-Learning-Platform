@@ -405,14 +405,6 @@ export default function StudentDashboard() {
     }));
   };
 
-  // Debug information
-  console.log('Current dashboard state:', {
-    enrolledCourses: enrolledCourses.length,
-    progress: Object.keys(progress).length,
-    lectures: Object.keys(lectures).length,
-    loading
-  });
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -423,16 +415,6 @@ export default function StudentDashboard() {
           </h1>
           <p className="text-gray-600">Continue your learning journey</p>
         </div>
-
-        {/* Debug Info - Remove in production */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-4 bg-gray-100 rounded text-sm">
-            <strong>Debug Info:</strong> 
-            Enrolled: {enrolledCourses.length}, 
-            Progress: {Object.keys(progress).length}, 
-            Lectures: {Object.keys(lectures).length}
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

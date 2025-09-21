@@ -71,6 +71,7 @@ export const getEnrolledCourses = async (req, res, next) => {
         const student = await User.findById(studentId)
             .populate({
                 path: 'enrolledCourses',
+                options: { sort: { createdAt: -1 } },
                 populate: [
                     {
                         path: 'instructor',
